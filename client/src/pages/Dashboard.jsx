@@ -24,13 +24,21 @@ const Dashboard = () => {
           throw new Error('Failed to fetch contributors');
         }
         const data = await response.json();
+        // Check if data is an array before mapping
+        if (!Array.isArray(data)) {
+          console.error('Expected array of contributors, received:', data);
+          setContributorsData([]);
+          return;
+        }
         const formattedData = data.map(contributor => ({
           username: contributor.login,
-          commits: contributor.contributions,
+          commits: contributor.total_commits || contributor.contributions,
           avatarUrl: contributor.avatar_url,
-          // GitHub API doesn't provide additions/deletions in contributors endpoint
-          additions: 0,
-          deletions: 0
+          additions: contributor.total_additions || 0,
+          deletions: contributor.total_deletions || 0,
+          recentCommits: contributor.recent_commits || 0,
+          recentAdditions: contributor.recent_additions || 0,
+          recentDeletions: contributor.recent_deletions || 0
         }));
         setContributorsData(formattedData);
       } catch (error) {
@@ -85,6 +93,20 @@ const Dashboard = () => {
                 </Text>
                 <Text size="sm" c="red">
                   -{contributor.deletions} lines
+                </Text>
+              </Group>
+              <Group gap="xl" mt="xs">
+                <Text size="sm" c="dimmed">
+                  Recent (4 weeks):
+                </Text>
+                <Text size="sm" c="dimmed">
+                  {contributor.recentCommits} commits
+                </Text>
+                <Text size="sm" c="green">
+                  +{contributor.recentAdditions} lines
+                </Text>
+                <Text size="sm" c="red">
+                  -{contributor.recentDeletions} lines
                 </Text>
               </Group>
             </div>
