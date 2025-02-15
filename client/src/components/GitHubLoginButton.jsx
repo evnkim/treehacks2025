@@ -1,3 +1,5 @@
+// client/src/components/GitHubLoginButton.jsx
+
 import { FaGithub } from "react-icons/fa";
 
 const GitHubLoginButton = () => {

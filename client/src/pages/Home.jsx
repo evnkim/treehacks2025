@@ -1,3 +1,5 @@
+// client/src/pages/Home.jsx
+
 import GitHubLoginButton from '../components/GitHubLoginButton'
 
 const Home = () => {
