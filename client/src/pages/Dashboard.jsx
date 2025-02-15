@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 const Dashboard = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
@@ -16,7 +16,7 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="dashboard">
+    <div className="p-3 dashboard">
       <header className="dashboard-header">
         <h1>Code Analytics Dashboard</h1>
       </header>
