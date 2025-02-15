@@ -1,9 +1,10 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import Tweeter from './Tweeter'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import Dashboard from './Dashboard';
+import './styles.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Tweeter />
-  </React.StrictMode>,
-)
+    <Dashboard />
+  </React.StrictMode>
+);
