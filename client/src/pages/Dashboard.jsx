@@ -6,7 +6,7 @@ const Dashboard = () => {
   const [contributorsData, setContributorsData] = useState(null);
 
   useEffect(() => {
-    // Simulate fetching data from an API
+    // Fetch analytics data
     setTimeout(() => {
       setAnalyticsData({
         totalCommits: 1200,
@@ -14,38 +14,32 @@ const Dashboard = () => {
         filesChanged: 150,
         codeComplexity: 2.8,
       });
-
-      setContributorsData([
-        {
-          username: "sarah-dev",
-          commits: 342,
-          additions: 15234,
-          deletions: 8432,
-          avatarUrl: "https://avatars.githubusercontent.com/u/12345678"
-        },
-        {
-          username: "alex-coder",
-          commits: 256,
-          additions: 12453,
-          deletions: 6543,
-          avatarUrl: "https://avatars.githubusercontent.com/u/23456789"
-        },
-        {
-          username: "mike-engineer",
-          commits: 187,
-          additions: 8765,
-          deletions: 4321,
-          avatarUrl: "https://avatars.githubusercontent.com/u/34567890"
-        },
-        {
-          username: "emma-programmer",
-          commits: 165,
-          additions: 7654,
-          deletions: 3456,
-          avatarUrl: "https://avatars.githubusercontent.com/u/45678901"
-        }
-      ]);
     }, 1000);
+
+    // Fetch contributors data from API
+    const fetchContributors = async () => {
+      try {
+        const response = await fetch('/api/contributors/evnkim/treehacks2025');
+        if (!response.ok) {
+          throw new Error('Failed to fetch contributors');
+        }
+        const data = await response.json();
+        const formattedData = data.map(contributor => ({
+          username: contributor.login,
+          commits: contributor.contributions,
+          avatarUrl: contributor.avatar_url,
+          // GitHub API doesn't provide additions/deletions in contributors endpoint
+          additions: 0,
+          deletions: 0
+        }));
+        setContributorsData(formattedData);
+      } catch (error) {
+        console.error('Error fetching contributors:', error);
+        setContributorsData([]); 
+      }
+    };
+
+    fetchContributors();
   }, []);
 
   const AnalyticsOverview = () => (
