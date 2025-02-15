@@ -1,3 +1,6 @@
 flask
 python-dotenv
 flask-sqlalchemy
+authlib
+requests
+psycopg2

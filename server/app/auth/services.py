@@ -4,10 +4,13 @@ from app.models.user import User
 
 class GitHubOAuth:
     def __init__(self):
+        self.github = None
+
+    def init_app(self, app):
         self.github = oauth.register(
             name='github',
-            client_id=current_app.config['GITHUB_CLIENT_ID'],
-            client_secret=current_app.config['GITHUB_CLIENT_SECRET'],
+            client_id=app.config['GITHUB_CLIENT_ID'],
+            client_secret=app.config['GITHUB_CLIENT_SECRET'],
             access_token_url='https://github.com/login/oauth/access_token',
             authorize_url='https://github.com/login/oauth/authorize',
             api_base_url='https://api.github.com/',
@@ -41,4 +44,5 @@ class GitHubOAuth:
             }
         })
 
+# Module level instantiation. Initialize later in app factory by calling github_oauth.init_app(app)
 github_oauth = GitHubOAuth()

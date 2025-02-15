@@ -9,6 +9,8 @@ def create_app(config_class=Config):
     # Initialize extensions
     db.init_app(app)
     oauth.init_app(app)
+    from app.auth.services import github_oauth
+    github_oauth.init_app(app)
 
     # Register blueprints
     from app.auth.routes import auth_bp
