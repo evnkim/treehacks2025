@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Tabs } from "@mantine/core";
+import { Tabs, Card, Avatar, Text, Group, Stack } from "@mantine/core";
 
 const Dashboard = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
+  const [contributorsData, setContributorsData] = useState(null);
 
   useEffect(() => {
     // Simulate fetching data from an API
@@ -13,6 +14,37 @@ const Dashboard = () => {
         filesChanged: 150,
         codeComplexity: 2.8,
       });
+
+      setContributorsData([
+        {
+          username: "sarah-dev",
+          commits: 342,
+          additions: 15234,
+          deletions: 8432,
+          avatarUrl: "https://avatars.githubusercontent.com/u/12345678"
+        },
+        {
+          username: "alex-coder",
+          commits: 256,
+          additions: 12453,
+          deletions: 6543,
+          avatarUrl: "https://avatars.githubusercontent.com/u/23456789"
+        },
+        {
+          username: "mike-engineer",
+          commits: 187,
+          additions: 8765,
+          deletions: 4321,
+          avatarUrl: "https://avatars.githubusercontent.com/u/34567890"
+        },
+        {
+          username: "emma-programmer",
+          commits: 165,
+          additions: 7654,
+          deletions: 3456,
+          avatarUrl: "https://avatars.githubusercontent.com/u/45678901"
+        }
+      ]);
     }, 1000);
   }, []);
 
@@ -37,15 +69,58 @@ const Dashboard = () => {
     </div>
   );
 
+  const Contributors = () => (
+    <Stack gap="md">
+      {contributorsData.map((contributor) => (
+        <Card key={contributor.username} padding="md" radius="md" withBorder>
+          <Group>
+            <Avatar 
+              src={contributor.avatarUrl} 
+              size="lg" 
+              radius="xl"
+              alt={contributor.username}
+            />
+            <div style={{ flex: 1 }}>
+              <Text fw={500} size="lg">{contributor.username}</Text>
+              <Group gap="xl">
+                <Text size="sm" c="dimmed">
+                  {contributor.commits} commits
+                </Text>
+                <Text size="sm" c="green">
+                  +{contributor.additions} lines
+                </Text>
+                <Text size="sm" c="red">
+                  -{contributor.deletions} lines
+                </Text>
+              </Group>
+            </div>
+          </Group>
+        </Card>
+      ))}
+    </Stack>
+  );
+
   return (
-    <div className="p-3">
+    <div className="p-8">
       <header className="mb-6">
         <h1 className="text-2xl font-bold">Code Analytics Dashboard</h1>
       </header>
       
-      <Tabs defaultValue="overview">
-        <Tabs.List>
+      <Tabs defaultValue="overview" styles={{
+        tab: {
+          padding: '8px 16px',
+          fontSize: '1rem',
+          '&:hover': {
+            backgroundColor: '#f8fafc'
+          }
+        },
+        panel: {
+          padding: '16px 0'
+        }
+      }}>
+        <Tabs.List grow>
           <Tabs.Tab value="overview">Overview</Tabs.Tab>
+          <Tabs.Tab value="contributors">Contributors</Tabs.Tab>
           <Tabs.Tab value="commits">Commits</Tabs.Tab>
           <Tabs.Tab value="code">Code Analysis</Tabs.Tab>
           <Tabs.Tab value="performance">Performance</Tabs.Tab>
@@ -54,6 +129,12 @@ const Dashboard = () => {
         <Tabs.Panel value="overview" pt="md">
           {analyticsData ? <AnalyticsOverview /> : (
             <p className="text-gray-600">Loading analytics data...</p>
+          )}
+        </Tabs.Panel>
+
+        <Tabs.Panel value="contributors" pt="md">
+          {contributorsData ? <Contributors /> : (
+            <p className="text-gray-600">Loading contributors data...</p>
           )}
         </Tabs.Panel>
         
