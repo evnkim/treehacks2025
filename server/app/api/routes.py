@@ -70,6 +70,16 @@ def get_contributors(repo_owner, repo_name):
             recent_additions = sum(week["a"] for week in recent_weeks)
             recent_deletions = sum(week["d"] for week in recent_weeks)
             
+            # Format commit history for graphing
+            commit_history = []
+            for week in contributor_stats["weeks"]:
+                # Convert Unix timestamp to ISO date string
+                week_date = datetime.fromtimestamp(week["w"]).isoformat()
+                commit_history.append({
+                    "date": week_date,
+                    "commits": week["c"]
+                })
+            
             enriched_contributor = {
                 **contributor,
                 "total_additions": total_additions,
@@ -77,11 +87,11 @@ def get_contributors(repo_owner, repo_name):
                 "total_commits": total_commits,
                 "recent_commits": recent_commits,
                 "recent_additions": recent_additions,
-                "recent_deletions": recent_deletions
+                "recent_deletions": recent_deletions,
+                "commit_history": commit_history
             }
             enriched_contributors.append(enriched_contributor)
         else:
             enriched_contributors.append(contributor)
 
-    # print(enriched_contributors)
     return jsonify(enriched_contributors)

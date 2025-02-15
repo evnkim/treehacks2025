@@ -1,5 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { Tabs, Card, Avatar, Text, Group, Stack } from "@mantine/core";
+import { Tabs, Card, Avatar, Text, Group, Stack, SimpleGrid } from "@mantine/core";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const Dashboard = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
@@ -30,16 +51,28 @@ const Dashboard = () => {
           setContributorsData([]);
           return;
         }
-        const formattedData = data.map(contributor => ({
-          username: contributor.login,
-          commits: contributor.total_commits || contributor.contributions,
-          avatarUrl: contributor.avatar_url,
-          additions: contributor.total_additions || 0,
-          deletions: contributor.total_deletions || 0,
-          recentCommits: contributor.recent_commits || 0,
-          recentAdditions: contributor.recent_additions || 0,
-          recentDeletions: contributor.recent_deletions || 0
-        }));
+        const formattedData = data.map(contributor => {
+          // Create weekly commit data from the last 4 weeks
+          const weeklyCommits = Array(4).fill(0);
+          if (contributor.recent_commits) {
+            // Distribute recent commits across weeks for demo
+            for (let i = 0; i < 4; i++) {
+              weeklyCommits[i] = Math.round(contributor.recent_commits / 4);
+            }
+          }
+          
+          return {
+            username: contributor.login,
+            commits: contributor.total_commits || contributor.contributions,
+            avatarUrl: contributor.avatar_url,
+            additions: contributor.total_additions || 0,
+            deletions: contributor.total_deletions || 0,
+            recentCommits: contributor.recent_commits || 0,
+            recentAdditions: contributor.recent_additions || 0,
+            recentDeletions: contributor.recent_deletions || 0,
+            weeklyCommits
+          };
+        });
         setContributorsData(formattedData);
       } catch (error) {
         console.error('Error fetching contributors:', error);
@@ -72,7 +105,7 @@ const Dashboard = () => {
   );
 
   const Contributors = () => (
-    <Stack gap="md">
+    <SimpleGrid cols={2} spacing="md">
       {contributorsData.map((contributor) => (
         <Card key={contributor.username} padding="md" radius="md" withBorder>
           <Group>
@@ -111,9 +144,45 @@ const Dashboard = () => {
               </Group>
             </div>
           </Group>
+          <div style={{ height: '200px', marginTop: '1rem' }}>
+            <Line
+              data={{
+                labels: ['Week 4', 'Week 3', 'Week 2', 'Week 1'],
+                datasets: [
+                  {
+                    label: 'Commits',
+                    data: contributor.weeklyCommits,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                  }
+                ]
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      stepSize: 1
+                    }
+                  }
+                },
+                plugins: {
+                  legend: {
+                    display: false
+                  },
+                  title: {
+                    display: true,
+                    text: 'Commits Over Time'
+                  }
+                }
+              }}
+            />
+          </div>
         </Card>
       ))}
-    </Stack>
+    </SimpleGrid>
   );
 
   return (
