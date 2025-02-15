@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Tabs, Card, Avatar, Text, Group, Stack, SimpleGrid } from "@mantine/core";
-import { Line } from "react-chartjs-2";
+import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend
@@ -17,6 +18,7 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend
@@ -24,7 +26,7 @@ ChartJS.register(
 
 const Dashboard = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
-  const [contributorsData, setContributorsData] = useState(null);
+  const [contributorsData, setContributorsData] = useState([]);  // Initialize as empty array
 
   useEffect(() => {
     // Fetch analytics data
@@ -52,14 +54,9 @@ const Dashboard = () => {
           return;
         }
         const formattedData = data.map(contributor => {
-          // Create weekly commit data from the last 4 weeks
-          const weeklyCommits = Array(4).fill(0);
-          if (contributor.recent_commits) {
-            // Distribute recent commits across weeks for demo
-            for (let i = 0; i < 4; i++) {
-              weeklyCommits[i] = Math.round(contributor.recent_commits / 4);
-            }
-          }
+          // Get commit history dates and counts
+          const commitHistory = contributor.commit_history || [];
+          const lastFourWeeks = commitHistory.slice(-4);
           
           return {
             username: contributor.login,
@@ -67,10 +64,7 @@ const Dashboard = () => {
             avatarUrl: contributor.avatar_url,
             additions: contributor.total_additions || 0,
             deletions: contributor.total_deletions || 0,
-            recentCommits: contributor.recent_commits || 0,
-            recentAdditions: contributor.recent_additions || 0,
-            recentDeletions: contributor.recent_deletions || 0,
-            weeklyCommits
+            commitHistory: lastFourWeeks
           };
         });
         setContributorsData(formattedData);
@@ -87,26 +81,26 @@ const Dashboard = () => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <div className="bg-white p-4 rounded-lg shadow">
         <h2 className="text-lg font-semibold mb-2">Total Commits</h2>
-        <p className="text-2xl">{analyticsData.totalCommits}</p>
+        <p className="text-2xl">{analyticsData?.totalCommits}</p>
       </div>
       <div className="bg-white p-4 rounded-lg shadow">
         <h2 className="text-lg font-semibold mb-2">Total Lines of Code</h2>
-        <p className="text-2xl">{analyticsData.totalLines}</p>
+        <p className="text-2xl">{analyticsData?.totalLines}</p>
       </div>
       <div className="bg-white p-4 rounded-lg shadow">
         <h2 className="text-lg font-semibold mb-2">Files Changed</h2>
-        <p className="text-2xl">{analyticsData.filesChanged}</p>
+        <p className="text-2xl">{analyticsData?.filesChanged}</p>
       </div>
       <div className="bg-white p-4 rounded-lg shadow">
         <h2 className="text-lg font-semibold mb-2">Avg. Code Complexity</h2>
-        <p className="text-2xl">{analyticsData.codeComplexity}</p>
+        <p className="text-2xl">{analyticsData?.codeComplexity}</p>
       </div>
     </div>
   );
 
   const Contributors = () => (
     <SimpleGrid cols={2} spacing="md">
-      {contributorsData.map((contributor) => (
+      {contributorsData && contributorsData.length > 0 ? contributorsData.map((contributor) => (
         <Card key={contributor.username} padding="md" radius="md" withBorder>
           <Group>
             <Avatar 
@@ -128,32 +122,19 @@ const Dashboard = () => {
                   -{contributor.deletions} lines
                 </Text>
               </Group>
-              <Group gap="xl" mt="xs">
-                <Text size="sm" c="dimmed">
-                  Recent (4 weeks):
-                </Text>
-                <Text size="sm" c="dimmed">
-                  {contributor.recentCommits} commits
-                </Text>
-                <Text size="sm" c="green">
-                  +{contributor.recentAdditions} lines
-                </Text>
-                <Text size="sm" c="red">
-                  -{contributor.recentDeletions} lines
-                </Text>
-              </Group>
             </div>
           </Group>
           <div style={{ height: '200px', marginTop: '1rem' }}>
-            <Line
+            <Bar
               data={{
-                labels: ['Week 4', 'Week 3', 'Week 2', 'Week 1'],
+                labels: contributor.commitHistory.map(week => new Date(week.date).toLocaleDateString()),
                 datasets: [
                   {
                     label: 'Commits',
-                    data: contributor.weeklyCommits,
+                    data: contributor.commitHistory.map(week => week.commits),
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
                     borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
+                    borderWidth: 1
                   }
                 ]
               }}
@@ -181,7 +162,9 @@ const Dashboard = () => {
             />
           </div>
         </Card>
-      ))}
+      )) : (
+        <Text>No contributors data available</Text>
+      )}
     </SimpleGrid>
   );
 
