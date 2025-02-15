@@ -1,6 +1,8 @@
 flask
-python-dotenv
 flask-sqlalchemy
+psycopg2-binary
+python-dotenv
 authlib
 requests
-psycopg2
+flask-cors
+Flask-Session
