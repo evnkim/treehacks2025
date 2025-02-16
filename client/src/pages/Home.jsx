@@ -1,65 +1,65 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import GitHubLoginButton from '../components/GitHubLoginButton'
-import { Menu, UnstyledButton, Group, Text, Loader } from '@mantine/core'
-import {
-  IconBolt,
-  IconDatabase,
-  IconUsers,
-} from '@tabler/icons-react'
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import GitHubLoginButton from "../components/GitHubLoginButton";
+import { Menu, UnstyledButton, Group, Text, Loader } from "@mantine/core";
+import { IconBolt, IconDatabase, IconUsers, IconArrowRight } from "@tabler/icons-react";
 
 const Home = () => {
-  const [repositories, setRepositories] = useState([])
-  const [groupedRepos, setGroupedRepos] = useState({})
-  const [loading, setLoading] = useState(false)
-  const [searchParams] = useSearchParams()
-  const [selectedRepo, setSelectedRepo] = useState(searchParams.get('repo') || '')
-  const navigate = useNavigate()
+  const [repositories, setRepositories] = useState([]);
+  const [groupedRepos, setGroupedRepos] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [selectedRepo, setSelectedRepo] = useState(
+    searchParams.get("repo") || ""
+  );
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchRepositories = async () => {
       try {
-        setLoading(true)
-        const response = await fetch('/api/github/repositories')
+        setLoading(true);
+        const response = await fetch("/api/github/repositories");
         if (response.ok) {
-          const data = await response.json()
+          const data = await response.json();
           const grouped = data.reduce((acc, repo) => {
             if (!acc[repo.owner]) {
-              acc[repo.owner] = []
+              acc[repo.owner] = [];
             }
             acc[repo.owner].push({
               value: `${repo.owner}/${repo.name}`,
-              label: `${repo.name}${repo.private ? ' (Private)' : ''}`,
-              description: repo.description || 'No description available'
-            })
-            return acc
-          }, {})
-          setGroupedRepos(grouped)
-          setRepositories(data)
+              label: `${repo.name}${repo.private ? " (Private)" : ""}`,
+              description: repo.description || "No description available",
+            });
+            return acc;
+          }, {});
+          setGroupedRepos(grouped);
+          setRepositories(data);
         } else if (response.status === 401) {
-          setRepositories([])
-          setGroupedRepos({})
+          setRepositories([]);
+          setGroupedRepos({});
         }
       } catch (error) {
-        console.error('Error fetching repositories:', error)
-        setRepositories([])
-        setGroupedRepos({})
+        console.error("Error fetching repositories:", error);
+        setRepositories([]);
+        setGroupedRepos({});
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchRepositories()
-  }, [])
+    fetchRepositories();
+  }, []);
 
   const handleRepoSelect = (value) => {
-    setSelectedRepo(value)
+    setSelectedRepo(value);
     if (value) {
-      navigate(`/dashboard?repo=${encodeURIComponent(value)}`, { replace: true })
+      navigate(`/dashboard?repo=${encodeURIComponent(value)}`, {
+        replace: true,
+      });
     } else {
-      navigate('/dashboard', { replace: true })
+      navigate("/dashboard", { replace: true });
     }
-  }
+  };
 
   return (
     <div className="relative min-h-screen w-full bg-gradient-to-br from-blue-50 via-white to-blue-100 overflow-hidden">
@@ -73,15 +73,16 @@ const Home = () => {
           Rebase
         </h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-          Supercharge your GitHub repositories with AI-powered insights and analytics
+          Supercharge your GitHub repositories with AI-powered insights and
+          analytics
         </p>
         <div className="flex flex-col items-center space-y-4 sm:flex-row sm:space-y-0 sm:space-x-6">
           <GitHubLoginButton />
           <button
-            className="rounded-md bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg hover:bg-blue-500 transition-colors"
-            onClick={() => window.scrollTo({ top: 900, behavior: 'smooth' })} // Just an example scroll
+            className="rounded-md bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg hover:bg-blue-500 transition-colors flex items-center gap-2"
+            onClick={() => window.scrollTo({ top: 900, behavior: "smooth" })}
           >
-            Explore Repositories
+            Learn More <IconArrowRight size={20} />
           </button>
         </div>
       </header>
@@ -117,7 +118,8 @@ const Home = () => {
               Intelligent Insights
             </h3>
             <p className="text-gray-600 text-center">
-              Leverage AI to highlight code hotspots, detect anomalies, and uncover new optimization opportunities.
+              Leverage AI to highlight code hotspots, detect anomalies, and
+              uncover new optimization opportunities.
             </p>
           </div>
           {/* Feature 2 */}
@@ -127,7 +129,8 @@ const Home = () => {
               Seamless Integration
             </h3>
             <p className="text-gray-600 text-center">
-              Connect with your GitHub repositories in just one click—no complicated setup required.
+              Connect with your GitHub repositories in just one click—no
+              complicated setup required.
             </p>
           </div>
           {/* Feature 3 */}
@@ -137,17 +140,15 @@ const Home = () => {
               Team Collaboration
             </h3>
             <p className="text-gray-600 text-center">
-              Share AI-generated reports with your team and keep everyone aligned on the latest insights.
+              Share AI-generated reports with your team and keep everyone
+              aligned on the latest insights.
             </p>
           </div>
         </div>
       </section>
 
       {/* Decorative wave divider */}
-      <svg
-        className="w-full h-32 text-blue-50"
-        viewBox="0 0 1440 320"
-      >
+      <svg className="w-full h-32 text-blue-50" viewBox="0 0 1440 320">
         <path
           fill="currentColor"
           fillOpacity="1"
@@ -189,16 +190,18 @@ const Home = () => {
                       <UnstyledButton className="w-full p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         <Group position="center">
                           <Text className="text-gray-700">
-                            {selectedRepo ? selectedRepo : 'Select a repository'}
+                            {selectedRepo
+                              ? selectedRepo
+                              : "Select a repository"}
                           </Text>
                           <IconChevronDown size={16} />
                         </Group>
                       </UnstyledButton>
                     </Menu.Target>
 
-                    <Menu.Dropdown 
-                      className="w-full" 
-                      style={{ maxHeight: '300px', overflowY: 'auto' }}
+                    <Menu.Dropdown
+                      className="w-full"
+                      style={{ maxHeight: "300px", overflowY: "auto" }}
                     >
                       {Object.entries(groupedRepos).map(([owner, repos]) => (
                         <Menu.Item key={owner} closeMenuOnClick={false}>
@@ -211,15 +214,21 @@ const Home = () => {
                                 </Group>
                               </UnstyledButton>
                             </Menu.Target>
-                            <Menu.Dropdown style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                            <Menu.Dropdown
+                              style={{ maxHeight: "250px", overflowY: "auto" }}
+                            >
                               {repos.map((repo) => (
                                 <Menu.Item
                                   key={repo.value}
                                   onClick={() => handleRepoSelect(repo.value)}
                                 >
                                   <div>
-                                    <Text size="sm" weight={500}>{repo.label}</Text>
-                                    <Text size="xs" color="dimmed">{repo.description}</Text>
+                                    <Text size="sm" weight={500}>
+                                      {repo.label}
+                                    </Text>
+                                    <Text size="xs" color="dimmed">
+                                      {repo.description}
+                                    </Text>
                                   </div>
                                 </Menu.Item>
                               ))}
@@ -239,11 +248,12 @@ const Home = () => {
       {/* Footer */}
       <footer className="relative z-10 bg-white text-center py-8">
         <p className="text-gray-600">
-          © {new Date().getFullYear()} Rebase. Powered by AI. Built at TreeHacks 2025. All rights reserved.
+          {new Date().getFullYear()} Rebase. Powered by AI. Built at TreeHacks
+          2025. All rights reserved.
         </p>
       </footer>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
