@@ -14,3 +14,5 @@ source venv/bin/activate
 pip install -r requirements.txt
 python3 wsgi.py
 ```
+
+navigate to `http://127.0.0.1:2000`
