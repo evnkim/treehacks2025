@@ -2,6 +2,12 @@
 
 react + tailwind + flask + postgres
 
+First, create a postgres database,
+
+```bash
+createdb rebasedb
+```
+
 ```bash
 cd client
 yarn install
