@@ -1,20 +1,77 @@
-# server/app/auth/routes.py
+"""Authentication API endpoints."""
 
-from flask import Blueprint, jsonify, session, current_app
-from app.auth.services import github_oauth
+from authlib.integrations.flask_client import OAuth
+from flask import redirect, session, url_for, Blueprint
+from sqlalchemy import select
+
+from app.extensions import db
+from app.config import FRONTEND_URL, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET
+from app.models.User import User
+# from app.utils import generate_user_id
+
+auth = Blueprint("auth", __name__)
+
 from app.extensions import oauth
 
-auth_bp = Blueprint('auth', __name__)
+github = oauth.register(
+    name="github",
+    client_id=GITHUB_CLIENT_ID,
+    client_secret=GITHUB_CLIENT_SECRET,
+    access_token_url="https://github.com/login/oauth/access_token",
+    authorize_url="https://github.com/login/oauth/authorize",
+    api_base_url="https://api.github.com",
+    client_kwargs={"scope": "user:email"},
+)
 
-@auth_bp.route('/login/github')
-def github_login():
-    return github_oauth.authorize_redirect()
 
-@auth_bp.route('/github/callback')
-def github_callback():
-    return github_oauth.handle_callback()
+@auth.get("/login")
+def login():
+    """Login endpoint."""
+    github = oauth.create_client("github")
+    redirect_uri = url_for("auth.authorize", _external=True)
+    return github.authorize_redirect(redirect_uri)  # type: ignore
 
-@auth_bp.route('/logout')
+
+@auth.route("/login/github/authorize")
+def authorize():
+    """Authorize with Github."""
+    github = oauth.create_client("github")
+    _ = github.authorize_access_token()  # type: ignore
+    user_info = github.get("user").json()  # type: ignore
+    user_id = "12345"
+    u = (
+        db.session.execute(
+            select(User).where(User.github_username == user_info["login"])
+        )
+        .scalars()
+        .first()
+    )
+    if u is None:
+        u = User(
+            github_username=user_info["login"],
+        )
+        db.session.add(u)
+        db.session.commit()
+    session["user"] = user_info
+    session["user"]["hack_email"] = u.hack_email
+    return redirect(f"{FRONTEND_URL}/u/{user_id}")
+
+
+@auth.get("/whoami")
+def whoami():
+    """Whoami endpoint."""
+    if "user" not in session:
+        return {"loggedIn": False}
+    return {
+        "loggedIn": True,
+        "user": session["user"]["login"],
+        "user_id": generate_user_id(session["user"]["login"]),
+        "hack_email": session["user"].get("hack_email", ""),
+    }
+
+
+@auth.get("/logout")
 def logout():
+    """Logout endpoint."""
     session.clear()
-    return jsonify({'message': 'Logged out successfully'})
+    return redirect(FRONTEND_URL)

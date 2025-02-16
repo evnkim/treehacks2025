@@ -1,6 +1,6 @@
 from flask import current_app, url_for, jsonify, session, redirect, request
 from app.extensions import oauth, db
-from app.models.user import User
+from app.models.User import User
 
 class GitHubOAuth:
     def __init__(self):
@@ -18,11 +18,18 @@ class GitHubOAuth:
         )
 
     def authorize_redirect(self):
+        oauth.create_client('github')
+        print(f"[GitHub OAuth] Authorization Request - Session Data: {dict(session)}")
+        
         return self.github.authorize_redirect(
             redirect_uri=url_for('auth.github_callback', _external=True)
         )
 
     def handle_callback(self):
+        oauth.create_client('github')
+
+        print(f"[GitHub OAuth] Callback Request - Session Data: {dict(session)}")
+
         token = self.github.authorize_access_token()
         resp = self.github.get('user', token=token)
         github_user_data = resp.json()

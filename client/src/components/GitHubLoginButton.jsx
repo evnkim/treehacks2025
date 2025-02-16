@@ -3,7 +3,7 @@ import { FaGithub } from "react-icons/fa";
 const GitHubLoginButton = () => {
   const handleLogin = () => {
     // This will redirect to our Flask backend's GitHub OAuth route
-    window.location.href = "/auth/login/github";
+    window.location.href = "/auth/login";
   };
 
   return (
