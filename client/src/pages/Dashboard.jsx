@@ -73,10 +73,16 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (!selectedRepo) return;
+    if (!selectedRepo) {
+      // Clear URL params when no repo selected
+      navigate('/dashboard', { replace: true });
+      return;
+    }
 
     // Update URL when selected repo changes
-    navigate(`/dashboard?repo=${encodeURIComponent(selectedRepo)}`, { replace: true });
+    const params = new URLSearchParams();
+    params.set('repo', selectedRepo);
+    navigate(`/dashboard?${params.toString()}`, { replace: true });
 
     const [owner, repo] = selectedRepo.split("/");
 

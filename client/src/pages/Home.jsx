@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import GitHubLoginButton from '../components/GitHubLoginButton'
 import { Select, Loader, Text } from '@mantine/core'
 
 const Home = () => {
   const [repositories, setRepositories] = useState([])
   const [loading, setLoading] = useState(false)
-  const [selectedRepo, setSelectedRepo] = useState('')
+  const [searchParams] = useSearchParams()
+  const [selectedRepo, setSelectedRepo] = useState(searchParams.get('repo') || '')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -42,7 +43,10 @@ const Home = () => {
     setSelectedRepo(value)
     if (value) {
       // Navigate to dashboard with selected repository
-      navigate(`/dashboard?repo=${encodeURIComponent(value)}`)
+      navigate(`/dashboard?repo=${encodeURIComponent(value)}`, { replace: true })
+    } else {
+      // Clear repo from URL if none selected
+      navigate('/dashboard', { replace: true })
     }
   }
 

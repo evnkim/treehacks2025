@@ -11,11 +11,11 @@ import {
   Loader,
 } from "@mantine/core";
 import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
+import { useSearchParams } from "react-router-dom";
 
 const FileTreeExplorer = () => {
-  // Get repo from URL params
-  const urlParams = new URLSearchParams(window.location.search);
-  const repoFullName = urlParams.get('repo'); // e.g. "owner/repo"
+  const [searchParams] = useSearchParams();
+  const repoFullName = searchParams.get('repo'); // e.g. "owner/repo"
   const [owner, repo] = repoFullName ? repoFullName.split('/') : [];
 
   // Tracks top-level nodes from GitHub
