@@ -534,6 +534,18 @@
   resolved "https://registry.yarnpkg.com/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.34.7.tgz#6531d61e7141091eaab0461ee8e0380c10e4ca57"
   integrity sha512-4ZedScpxxIrVO7otcZ8kCX1mZArtH2Wfj3uFCxRJ9NO80gg1XV0U/b2f/MKaGwj2X3QopHfoWiDQ917FRpwY3w==
 
+"@tabler/icons-react@^3.30.0":
+  version "3.30.0"
+  resolved "https://registry.yarnpkg.com/@tabler/icons-react/-/icons-react-3.30.0.tgz#38159e19aa0c743182796193dd0bef6595de9a29"
+  integrity sha512-9KZ9D1UNAyjlLkkYp2HBPHdf6lAJ2aelDqh8YYAnnmLF3xwprWKxxW8+zw5jlI0IwdfN4XFFuzqePkaw+DpIOg==
+  dependencies:
+    "@tabler/icons" "3.30.0"
+
+"@tabler/icons@3.30.0":
+  version "3.30.0"
+  resolved "https://registry.yarnpkg.com/@tabler/icons/-/icons-3.30.0.tgz#4f80f52cc6355b440a4ee0dadd4c3e3775e50663"
+  integrity sha512-c8OKLM48l00u9TFbh2qhSODMONIzML8ajtCyq95rW8vzkWcBrKRPM61tdkThz2j4kd5u17srPGIjqdeRUZdfdw==
+
 "@tailwindcss/node@^4.0.6":
   version "4.0.6"
   resolved "https://registry.yarnpkg.com/@tailwindcss/node/-/node-4.0.6.tgz#d07152f447b37c8ce68244b0ec1ce427f5ed856e"
@@ -693,6 +705,11 @@ browserslist@^4.21.3:
     electron-to-chromium "^1.4.251"
     node-releases "^2.0.6"
     update-browserslist-db "^1.0.9"
+
+camelcase@^5.0.0:
+  version "5.3.1"
+  resolved "https://registry.yarnpkg.com/camelcase/-/camelcase-5.3.1.tgz#e3c9b31569e106811df242f715725a1f4c494320"
+  integrity sha512-L28STB170nwWS63UjtlEOE3dldQApaJXZkOI1uMFfzf3rRuPegHaHesyee+YxQ+W6SvRDQV6UrdOdRiR153wJg==
 
 caniuse-lite@^1.0.30001400:
   version "1.0.30001444"
@@ -875,6 +892,13 @@ has-flag@^3.0.0:
   version "3.0.0"
   resolved "https://registry.npmjs.org/has-flag/-/has-flag-3.0.0.tgz"
   integrity sha512-sKJf1+ceQBr4SMkvQnBDNDtf4TXpVhVGateu0t918bl30FnbE2m4vNLX+VWe/dpjlb+HugGYzW7uQXH98HPEYw==
+
+icons-react@^3.7.1:
+  version "3.7.1"
+  resolved "https://registry.yarnpkg.com/icons-react/-/icons-react-3.7.1.tgz#f6a7f00f4bddaa9438d8680bf0ac2a4c899847ea"
+  integrity sha512-HrBgOi+GKbtwBVIjgRx6KM7CenGc3s889ntLUc0QXdwtF0cmW+Avr751VSFlM1Rq8rf6ciCT5fkwMwYcEmUzaQ==
+  dependencies:
+    camelcase "^5.0.0"
 
 jiti@^2.4.2:
   version "2.4.2"
