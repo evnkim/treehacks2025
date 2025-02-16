@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import GitHubLoginButton from "../components/GitHubLoginButton";
 import { Menu, UnstyledButton, Group, Text, Loader } from "@mantine/core";
-import { IconBolt, IconDatabase, IconUsers, IconArrowRight } from "@tabler/icons-react";
+import { IconBolt, IconDatabase, IconUsers, IconArrowRight, IconChevronDown } from "@tabler/icons-react";
 
 const Home = () => {
   const [repositories, setRepositories] = useState([]);
