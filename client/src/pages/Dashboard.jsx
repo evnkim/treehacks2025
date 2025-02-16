@@ -30,6 +30,7 @@ import {
 import "chartjs-adapter-date-fns";
 import zoomPlugin from "chartjs-plugin-zoom";
 import FileTreeExplorer from "../components/FileTreeExplorer";
+import CommitsTab from "../components/CommitsTab";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 ChartJS.register(
@@ -360,7 +361,10 @@ const Dashboard = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="commits" pt="md">
-          <Text>Commit history and statistics will go here</Text>
+          <CommitsTab
+            owner={selectedRepo.split("/")[0]}
+            repo={selectedRepo.split("/")[1]}
+          />
         </Tabs.Panel>
 
         <Tabs.Panel value="code" pt="md">
