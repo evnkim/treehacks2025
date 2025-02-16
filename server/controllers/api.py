@@ -169,8 +169,9 @@ def get_commits(repo_owner, repo_name):
     Fetch recent commits for the specified repository.
     Optionally accept query parameters like 'branch', 'per_page', 'page'.
     """
-    if not GITHUB_TOKEN:
-        return jsonify({"error": "GitHub token not configured"}), 500
+    token = get_user_token()
+    if not token:
+        return jsonify({"error": "GitHub token not found"}), 401
     
     # Extract optional query parameters
     branch = request.args.get("branch", "main")
@@ -181,7 +182,7 @@ def get_commits(repo_owner, repo_name):
     url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/commits"
     headers = {
         "Accept": "application/vnd.github.v3+json",
-        "Authorization": f"token {GITHUB_TOKEN}"
+        "Authorization": f"token {token}"
     }
     params = {
         "sha": branch,
@@ -224,12 +225,13 @@ def get_overview(repo_owner, repo_name):
       - Possibly code analysis stats (code complexity, lines of code, etc.)
       - Possibly total commits or other local computed metrics
     """
-    if not GITHUB_TOKEN:
-        return jsonify({"error": "GitHub token not configured"}), 500
+    token = get_user_token()
+    if not token:
+        return jsonify({"error": "GitHub token not found"}), 401
 
     headers = {
         "Accept": "application/vnd.github.v3+json",
-        "Authorization": f"token {GITHUB_TOKEN}"
+        "Authorization": f"token {token}"
     }
 
     # 1. Basic repo info: GET /repos/{owner}/{repo}
