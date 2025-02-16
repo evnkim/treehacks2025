@@ -56,10 +56,12 @@ const Home = () => {
         <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome to Rebase</h1>
         {repositories.length === 0 ? (
           <>
-            <p className="text-lg text-gray-600 mb-8">
-              Connect your GitHub account to analyze your repositories
-            </p>
-            <GitHubLoginButton />
+            <div className="flex flex-col items-center">
+              <p className="text-lg text-gray-600 mb-8">
+                Connect your GitHub account to analyze your repositories
+              </p>
+              <GitHubLoginButton />
+            </div>
           </>
         ) : (
           <div className="w-96">
