@@ -32,6 +32,7 @@ import "chartjs-adapter-date-fns";
 import zoomPlugin from "chartjs-plugin-zoom";
 import FileTreeExplorer from "../components/FileTreeExplorer";
 import CommitsTab from "../components/CommitsTab";
+import OverviewTab from "../components/OverviewTab";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 ChartJS.register(
@@ -398,13 +399,20 @@ const Dashboard = () => {
           <Tabs.Tab value="overview">Overview</Tabs.Tab>
           <Tabs.Tab value="contributors">Contributors</Tabs.Tab>
           <Tabs.Tab value="commits">Commits</Tabs.Tab>
-          <Tabs.Tab value="code">Code Analysis</Tabs.Tab>
+          {/* <Tabs.Tab value="code">Code Analysis</Tabs.Tab> */}
           <Tabs.Tab value="codebase">Codebase</Tabs.Tab>
-          <Tabs.Tab value="performance">Performance</Tabs.Tab>
+          {/* <Tabs.Tab value="performance">Performance</Tabs.Tab> */}
         </Tabs.List>
 
         <Tabs.Panel value="overview" pt="md">
-          {analyticsData ? <AnalyticsOverview /> : <Text>Loading analytics data...</Text>}
+          {selectedRepo ? (
+            <OverviewTab
+              owner={selectedRepo.split("/")[0]}
+              repo={selectedRepo.split("/")[1]}
+            />
+          ) : (
+            <Text>Select a repository above</Text>
+          )}
         </Tabs.Panel>
 
         <Tabs.Panel value="contributors" pt="md">
@@ -418,17 +426,17 @@ const Dashboard = () => {
           />
         </Tabs.Panel>
 
-        <Tabs.Panel value="code" pt="md">
+        {/* <Tabs.Panel value="code" pt="md">
           <Text>Detailed code analysis metrics will go here</Text>
-        </Tabs.Panel>
+        </Tabs.Panel> */}
 
         <Tabs.Panel value="codebase" pt="md">
           <FileTreeExplorer />
         </Tabs.Panel>
 
-        <Tabs.Panel value="performance" pt="md">
+        {/* <Tabs.Panel value="performance" pt="md">
           <Text>Performance metrics and trends will go here</Text>
-        </Tabs.Panel>
+        </Tabs.Panel> */}
       </Tabs>
     </div>
   );

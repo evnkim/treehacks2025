@@ -163,6 +163,131 @@ def get_contributors(repo_owner, repo_name):
     current_app.logger.info(f"Returning data for {len(enriched_contributors)} contributors.")
     return jsonify(enriched_contributors)
 
+@api.route("/commits/<repo_owner>/<repo_name>", methods=["GET"])
+def get_commits(repo_owner, repo_name):
+    """
+    Fetch recent commits for the specified repository.
+    Optionally accept query parameters like 'branch', 'per_page', 'page'.
+    """
+    if not GITHUB_TOKEN:
+        return jsonify({"error": "GitHub token not configured"}), 500
+    
+    # Extract optional query parameters
+    branch = request.args.get("branch", "main")
+    per_page = request.args.get("per_page", "30")
+    page = request.args.get("page", "1")
+
+    # Build GitHub API URL
+    url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/commits"
+    headers = {
+        "Accept": "application/vnd.github.v3+json",
+        "Authorization": f"token {GITHUB_TOKEN}"
+    }
+    params = {
+        "sha": branch,
+        "per_page": per_page,
+        "page": page
+    }
+
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        response.raise_for_status()
+        commits_data = response.json()
+
+        # You could enrich the data further, or just return as-is
+        # Example: format the commit data to only return what you need
+        formatted_commits = []
+        for commit_obj in commits_data:
+            commit = commit_obj.get("commit", {})
+            author = commit.get("author", {})
+            committer = commit_obj.get("committer", {})
+            
+            formatted_commits.append({
+                "sha": commit_obj.get("sha"),
+                "message": commit.get("message"),
+                "author_name": author.get("name"),
+                "author_email": author.get("email"),
+                "date": author.get("date"),
+                "committer_avatar_url": committer.get("avatar_url"),
+            })
+
+        return jsonify(formatted_commits)
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+    
+@api.route("/overview/<repo_owner>/<repo_name>", methods=["GET"])
+def get_overview(repo_owner, repo_name):
+    """
+    Returns an overview of repository stats:
+      - Basic GitHub info (stars, forks, watchers, open issues)
+      - Possibly code analysis stats (code complexity, lines of code, etc.)
+      - Possibly total commits or other local computed metrics
+    """
+    if not GITHUB_TOKEN:
+        return jsonify({"error": "GitHub token not configured"}), 500
+
+    headers = {
+        "Accept": "application/vnd.github.v3+json",
+        "Authorization": f"token {GITHUB_TOKEN}"
+    }
+
+    # 1. Basic repo info: GET /repos/{owner}/{repo}
+    repo_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}"
+    repo_info_res = requests.get(repo_url, headers=headers)
+    if repo_info_res.status_code != 200:
+        return jsonify({"error": "Could not fetch repository info"}), repo_info_res.status_code
+    repo_info = repo_info_res.json()
+
+    # 2. Total commits: GET /repos/{owner}/{repo}/commits?per_page=1
+    #    Use 'Link' header to find the last page or do a HEAD request
+    commits_url = f"{repo_url}/commits"
+    params = {"per_page": 1}
+    commits_res = requests.get(commits_url, headers=headers, params=params)
+    if commits_res.status_code != 200:
+        total_commits = None
+    else:
+        # Extract from the 'Link' header if present
+        # e.g.: <https://api.github.com/repositories/xxx/commits?per_page=1&page=65>; rel="last"
+        links = commits_res.headers.get("Link", "")
+        total_commits = None
+        if 'rel="last"' in links:
+            # Extract the page number
+            # Typically: <...&page=123>; rel="last"
+            parts = links.split(",")
+            for part in parts:
+                if 'rel="last"' in part:
+                    # find ?page=X
+                    start = part.find("page=")
+                    end = part.find(">;", start)
+                    if start != -1 and end != -1:
+                        total_commits = part[start+5:end]  # the page number
+                        break
+
+    # 3. Example local code analysis (optional)
+    #    Suppose you already store or can compute average code complexity, lines of code, etc.
+    #    For demonstration, we'll fake these values:
+    code_analysis_data = {
+        "average_complexity": 4.3/10,
+        "total_lines_of_code": 1442
+    }
+
+    # 4. Combine data into a single JSON
+    overview_data = {
+        "name": repo_info.get("name"),
+        "description": repo_info.get("description"),
+        "stars": repo_info.get("stargazers_count"),
+        "forks": repo_info.get("forks_count"),
+        "watchers": repo_info.get("watchers_count"),
+        "open_issues": repo_info.get("open_issues_count"),
+        "total_commits": total_commits,  # or None if unavailable
+        "average_complexity": code_analysis_data["average_complexity"],
+        "total_lines_of_code": code_analysis_data["total_lines_of_code"],
+    }
+
+    return jsonify(overview_data)
+
+
 @api.route("/analyze/file", methods=["POST"])
 def analyze_single_file():
     """
