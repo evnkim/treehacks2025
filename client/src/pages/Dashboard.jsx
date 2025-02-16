@@ -13,6 +13,7 @@ import {
   Select,
   Button,
   Center,
+  Menu,
 } from "@mantine/core";
 import { Bar } from "react-chartjs-2";
 import {
@@ -53,6 +54,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [analyticsData, setAnalyticsData] = useState(null);
   const [contributorsData, setContributorsData] = useState([]);
+  const [groupedRepos, setGroupedRepos] = useState({});
 
   useEffect(() => {
     // Fetch user's repositories on mount
@@ -61,6 +63,17 @@ const Dashboard = () => {
         const response = await fetch("/api/github/repositories");
         if (!response.ok) throw new Error("Failed to fetch repositories");
         const data = await response.json();
+        
+        // Group repositories by owner
+        const grouped = data.reduce((acc, repo) => {
+          if (!acc[repo.owner]) {
+            acc[repo.owner] = [];
+          }
+          acc[repo.owner].push(repo);
+          return acc;
+        }, {});
+        
+        setGroupedRepos(grouped);
         setRepositories(data);
       } catch (error) {
         console.error("Error fetching repositories:", error);
@@ -151,18 +164,36 @@ const Dashboard = () => {
           <Text size="xl" weight={500} align="center" mb="md">
             Select a Repository
           </Text>
-          <Select
-            label="Choose a repository"
-            placeholder="Select a repository"
-            data={repositories.map(repo => ({
-              value: `${repo.owner}/${repo.name}`,
-              label: repo.name
-            }))}
-            value={selectedRepo}
-            onChange={setSelectedRepo}
-            searchable
-            mb="md"
-          />
+          <Menu>
+            <Menu.Target>
+              <Button fullWidth mb="md">
+                {selectedRepo || "Choose a repository"}
+              </Button>
+            </Menu.Target>
+            <Menu.Dropdown style={{ maxHeight: '400px', overflow: 'auto' }}>
+              {Object.entries(groupedRepos).map(([owner, repos]) => (
+                <Menu.Item key={owner} closeMenuOnClick={false}>
+                  <Menu position="right-start">
+                    <Menu.Target>
+                      <Button variant="subtle" fullWidth>
+                        {owner}
+                      </Button>
+                    </Menu.Target>
+                    <Menu.Dropdown>
+                      {repos.map(repo => (
+                        <Menu.Item
+                          key={`${owner}/${repo.name}`}
+                          onClick={() => setSelectedRepo(`${owner}/${repo.name}`)}
+                        >
+                          {repo.name}
+                        </Menu.Item>
+                      ))}
+                    </Menu.Dropdown>
+                  </Menu>
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Menu>
         </Card>
       </Center>
     );
@@ -321,16 +352,36 @@ const Dashboard = () => {
       <header className="mb-6">
         <Group position="apart">
           <h1 className="text-2xl font-bold">Code Analytics Dashboard</h1>
-          <Select
-            value={selectedRepo}
-            onChange={setSelectedRepo}
-            data={repositories.map(repo => ({
-              value: `${repo.owner}/${repo.name}`,
-              label: repo.name
-            }))}
-            placeholder="Switch repository"
-            style={{ width: "200px" }}
-          />
+          <Menu>
+            <Menu.Target>
+              <Button>
+                {selectedRepo.split('/')[1] || "Switch repository"}
+              </Button>
+            </Menu.Target>
+            <Menu.Dropdown style={{ maxHeight: '400px', overflow: 'auto' }}>
+              {Object.entries(groupedRepos).map(([owner, repos]) => (
+                <Menu.Item key={owner} closeMenuOnClick={false}>
+                  <Menu position="right-start">
+                    <Menu.Target>
+                      <Button variant="subtle" fullWidth>
+                        {owner}
+                      </Button>
+                    </Menu.Target>
+                    <Menu.Dropdown>
+                      {repos.map(repo => (
+                        <Menu.Item
+                          key={`${owner}/${repo.name}`}
+                          onClick={() => setSelectedRepo(`${owner}/${repo.name}`)}
+                        >
+                          {repo.name}
+                        </Menu.Item>
+                      ))}
+                    </Menu.Dropdown>
+                  </Menu>
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Menu>
         </Group>
       </header>
 
