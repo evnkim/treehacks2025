@@ -25,5 +25,6 @@ class User(db.Model):
     )
 
     github_username: Mapped[str] = mapped_column()
+    github_access_token: Mapped[str] = mapped_column(nullable=True)
     hack_email: Mapped[str] = mapped_column(default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
