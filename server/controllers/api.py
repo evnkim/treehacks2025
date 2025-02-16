@@ -1,24 +1,22 @@
 """API endpoints."""
 
-import random
+import os
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, cast
 
 from apiflask import APIBlueprint
-from flask import jsonify, request, session
+from flask import current_app, jsonify, request
+import requests
 from sqlalchemy import select
 
 from server import db
-from server.models.User import User
-from server.utils import (
-    get_username_from_user_id,
+from server.controllers.ai_insights import (
+    analyze_code_quality,
+    analyze_file,
+    explain_code,
+    summarize_pr,
 )
-
-from flask import Blueprint, jsonify, request, current_app
-import os
-import time
-from server.controllers.ai_insights import analyze_code_quality, explain_code, summarize_pr, analyze_file
-
 
 api = APIBlueprint("api", __name__, url_prefix="/api", tag="api")
 
