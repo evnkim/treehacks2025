@@ -10,6 +10,9 @@ import {
   SimpleGrid,
   Loader,
   Paper,
+  Select,
+  Button,
+  Center,
 } from "@mantine/core";
 import { Bar } from "react-chartjs-2";
 import {
@@ -26,7 +29,8 @@ import {
 } from "chart.js";
 import "chartjs-adapter-date-fns";
 import zoomPlugin from "chartjs-plugin-zoom";
-import FileTreeExplorer from "../components/FileTreeExplorer"; // <-- modular file explorer
+import FileTreeExplorer from "../components/FileTreeExplorer";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 ChartJS.register(
   CategoryScale,
@@ -42,24 +46,61 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [repositories, setRepositories] = useState([]);
+  const [selectedRepo, setSelectedRepo] = useState(searchParams.get('repo') || "");
+  const [loading, setLoading] = useState(true);
   const [analyticsData, setAnalyticsData] = useState(null);
   const [contributorsData, setContributorsData] = useState([]);
 
   useEffect(() => {
-    // Simulate fetching analytics data.
-    setTimeout(() => {
-      setAnalyticsData({
-        totalCommits: 1200,
-        totalLines: 45000,
-        filesChanged: 150,
-        codeComplexity: 2.8,
-      });
-    }, 1000);
+    // Fetch user's repositories on mount
+    const fetchRepositories = async () => {
+      try {
+        const response = await fetch("/api/github/repositories");
+        if (!response.ok) throw new Error("Failed to fetch repositories");
+        const data = await response.json();
+        setRepositories(data);
+      } catch (error) {
+        console.error("Error fetching repositories:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Fetch contributors data.
+    fetchRepositories();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedRepo) return;
+
+    // Update URL when selected repo changes
+    navigate(`/dashboard?repo=${encodeURIComponent(selectedRepo)}`, { replace: true });
+
+    const [owner, repo] = selectedRepo.split("/");
+
+    // Fetch analytics data for selected repository
+    const fetchAnalytics = async () => {
+      try {
+        const response = await fetch(`/api/analytics/${owner}/${repo}`);
+        if (!response.ok) throw new Error("Failed to fetch analytics");
+        const data = await response.json();
+        setAnalyticsData({
+          totalCommits: data.total_commits || 0,
+          totalLines: data.total_lines || 0,
+          filesChanged: data.files_changed || 0,
+          codeComplexity: data.code_complexity || 0,
+        });
+      } catch (error) {
+        console.error("Error fetching analytics:", error);
+      }
+    };
+
+    // Fetch contributors data for selected repository
     const fetchContributors = async () => {
       try {
-        const response = await fetch("/api/contributors/techx/plume");
+        const response = await fetch(`/api/contributors/${owner}/${repo}`);
         if (!response.ok) throw new Error("Failed to fetch contributors");
         const data = await response.json();
         if (!Array.isArray(data)) {
@@ -85,8 +126,41 @@ const Dashboard = () => {
       }
     };
 
+    fetchAnalytics();
     fetchContributors();
-  }, []);
+  }, [selectedRepo, navigate]);
+
+  if (loading) {
+    return (
+      <Center style={{ height: "100vh" }}>
+        <Loader size="xl" />
+      </Center>
+    );
+  }
+
+  if (!selectedRepo) {
+    return (
+      <Center style={{ height: "100vh" }}>
+        <Card shadow="sm" p="xl" radius="md" withBorder style={{ width: "400px" }}>
+          <Text size="xl" weight={500} align="center" mb="md">
+            Select a Repository
+          </Text>
+          <Select
+            label="Choose a repository"
+            placeholder="Select a repository"
+            data={repositories.map(repo => ({
+              value: `${repo.owner}/${repo.name}`,
+              label: repo.name
+            }))}
+            value={selectedRepo}
+            onChange={setSelectedRepo}
+            searchable
+            mb="md"
+          />
+        </Card>
+      </Center>
+    );
+  }
 
   const AnalyticsOverview = () => (
     <SimpleGrid cols={4} spacing="md">
@@ -239,7 +313,19 @@ const Dashboard = () => {
   return (
     <div className="py-8 px-12">
       <header className="mb-6">
-        <h1 className="text-2xl font-bold">Code Analytics Dashboard</h1>
+        <Group position="apart">
+          <h1 className="text-2xl font-bold">Code Analytics Dashboard</h1>
+          <Select
+            value={selectedRepo}
+            onChange={setSelectedRepo}
+            data={repositories.map(repo => ({
+              value: `${repo.owner}/${repo.name}`,
+              label: repo.name
+            }))}
+            placeholder="Switch repository"
+            style={{ width: "200px" }}
+          />
+        </Group>
       </header>
 
       <Tabs defaultValue="overview" styles={{
@@ -276,7 +362,6 @@ const Dashboard = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="codebase" pt="md">
-          {/* Render the modular file explorer */}
           <FileTreeExplorer />
         </Tabs.Panel>
 

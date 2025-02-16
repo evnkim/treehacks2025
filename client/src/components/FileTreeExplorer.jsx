@@ -5,6 +5,11 @@ import { Card, Group, Text, ActionIcon, Stack, Title, Loader } from "@mantine/co
 import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
 
 const FileTreeExplorer = () => {
+  // Get repo from URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  const repoFullName = urlParams.get('repo'); // e.g. "owner/repo"
+  const [owner, repo] = repoFullName ? repoFullName.split('/') : [];
+
   // Tracks top-level nodes from GitHub
   const [rootNodes, setRootNodes] = useState([]);
 
@@ -19,11 +24,13 @@ const FileTreeExplorer = () => {
 
   // Fetch repository root contents on mount
   useEffect(() => {
-    fetch("/api/github/list-files/techx/plume?path=")
-      .then((response) => response.json())
-      .then((data) => setRootNodes(data))
-      .catch((error) => console.error("Error fetching root file tree:", error));
-  }, []);
+    if (owner && repo) {
+      fetch(`/api/github/list-files/${owner}/${repo}?path=`)
+        .then((response) => response.json())
+        .then((data) => setRootNodes(data))
+        .catch((error) => console.error("Error fetching root file tree:", error));
+    }
+  }, [owner, repo]);
 
   // Expand or collapse a directory. If expanding for the first time, fetch its children.
   const toggleDirectory = async (node) => {
@@ -32,7 +39,7 @@ const FileTreeExplorer = () => {
     if (!isCurrentlyExpanded && !childrenByPath[node.path]) {
       try {
         const response = await fetch(
-          `/api/github/list-files/techx/plume?path=${encodeURIComponent(node.path)}`
+          `/api/github/list-files/${owner}/${repo}?path=${encodeURIComponent(node.path)}`
         );
         const data = await response.json();
         setChildrenByPath((prev) => ({ ...prev, [node.path]: data }));
@@ -55,7 +62,7 @@ const FileTreeExplorer = () => {
       setLoadingPaths(prev => ({ ...prev, [node.path]: true }));
       try {
         const fileRes = await fetch(
-          `/api/github/get-file/techx/plume?path=${encodeURIComponent(node.path)}`
+          `/api/github/get-file/${owner}/${repo}?path=${encodeURIComponent(node.path)}`
         );
         const fileContent = await fileRes.text();
         const analysisRes = await fetch("/api/analyze/file", {
@@ -156,7 +163,9 @@ const FileTreeExplorer = () => {
   return (
     <Stack p="md">
       <Title order={2}>Repository File Tree</Title>
-      {rootNodes.length > 0 ? (
+      {!repoFullName ? (
+        <Text>Please select a repository first</Text>
+      ) : rootNodes.length > 0 ? (
         rootNodes.map((node) => (
           <TreeNode key={node.path} node={node} level={0} />
         ))

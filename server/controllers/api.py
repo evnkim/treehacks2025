@@ -25,6 +25,51 @@ api = APIBlueprint("api", __name__, url_prefix="/api", tag="api")
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
+@api.route("/github/repositories", methods=["GET"])
+def get_repositories():
+    """Get list of repositories the authenticated user has access to."""
+    if not GITHUB_TOKEN:
+        current_app.logger.error("GITHUB_TOKEN is not set!")
+        return jsonify({"error": "GitHub token not configured"}), 500
+
+    headers = {
+        "Accept": "application/vnd.github.v3+json",
+        "Authorization": f"token {GITHUB_TOKEN}"
+    }
+
+    # Get authenticated user's repositories (both private and public)
+    repos_url = "https://api.github.com/user/repos"
+    current_app.logger.info("Fetching user repositories")
+    
+    try:
+        response = requests.get(
+            repos_url,
+            headers=headers,
+            params={
+                "sort": "updated",
+                "per_page": 100,
+                "type": "all"  # Include private repos
+            }
+        )
+        response.raise_for_status()
+        
+        repos = response.json()
+        formatted_repos = [{
+            "name": repo["name"],
+            "owner": repo["owner"]["login"],
+            "full_name": repo["full_name"],
+            "private": repo["private"],
+            "description": repo["description"],
+            "updated_at": repo["updated_at"]
+        } for repo in repos]
+        
+        current_app.logger.info(f"Found {len(formatted_repos)} repositories")
+        return jsonify(formatted_repos)
+
+    except requests.exceptions.RequestException as e:
+        current_app.logger.error(f"GitHub API request failed: {str(e)}")
+        return jsonify({"error": "Failed to fetch repositories"}), 500
+
 @api.route("/contributors/<repo_owner>/<repo_name>", methods=["GET"])
 def get_contributors(repo_owner, repo_name):
     if not repo_owner or not repo_name:
