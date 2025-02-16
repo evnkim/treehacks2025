@@ -1,17 +1,21 @@
 // client/src/components/FileTreeExplorer.jsx
 
 import React, { useState, useEffect } from "react";
+import { Card, Group, Text, ActionIcon, Stack, Title, Loader } from "@mantine/core";
+import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
 
 const FileTreeExplorer = () => {
   // Tracks top-level nodes from GitHub
   const [rootNodes, setRootNodes] = useState([]);
 
-  // Keeps track of which paths are “expanded” (for directories) or “open” (for files)
+  // Keeps track of which paths are "expanded" (for directories) or "open" (for files)
   const [expandedPaths, setExpandedPaths] = useState({}); // e.g. { "src/components": true }
   // Holds children for each directory path once loaded
   const [childrenByPath, setChildrenByPath] = useState({});
   // Holds analysis for each file path
   const [analysisByPath, setAnalysisByPath] = useState({});
+  // Track loading state for file analysis
+  const [loadingPaths, setLoadingPaths] = useState({});
 
   // Fetch repository root contents on mount
   useEffect(() => {
@@ -44,11 +48,11 @@ const FileTreeExplorer = () => {
     }));
   };
 
-  // Fetch file analysis if we haven’t yet, then toggle “expanded” for the file
+  // Fetch file analysis if we haven't yet, then toggle "expanded" for the file
   const toggleFile = async (node) => {
     const isCurrentlyExpanded = expandedPaths[node.path];
     if (!analysisByPath[node.path] && !isCurrentlyExpanded) {
-      // If we’ve never fetched analysis for this file, do so
+      setLoadingPaths(prev => ({ ...prev, [node.path]: true }));
       try {
         const fileRes = await fetch(
           `/api/github/get-file/techx/plume?path=${encodeURIComponent(node.path)}`
@@ -63,10 +67,12 @@ const FileTreeExplorer = () => {
         setAnalysisByPath((prev) => ({ ...prev, [node.path]: analysisData }));
       } catch (error) {
         console.error("Error fetching file analysis:", error);
+      } finally {
+        setLoadingPaths(prev => ({ ...prev, [node.path]: false }));
       }
     }
 
-    // Toggle file’s “expanded” state
+    // Toggle file's "expanded" state
     setExpandedPaths((prev) => ({
       ...prev,
       [node.path]: !prev[node.path],
@@ -75,16 +81,16 @@ const FileTreeExplorer = () => {
 
   // Renders file analysis
   const renderAnalysis = (analysis) => (
-    <div style={{ lineHeight: "1.5em" }}>
+    <Stack spacing="xs">
       {Object.entries(analysis).map(([key, value]) => (
-        <div key={key}>
-          <strong>{formatKey(key)}:</strong> {String(value)}
-        </div>
+        <Text key={key}>
+          <Text span fw={700}>{formatKey(key)}:</Text> {String(value)}
+        </Text>
       ))}
-    </div>
+    </Stack>
   );
 
-  // Helper to format snake_case keys to “Snake Case”
+  // Helper to format snake_case keys to "Snake Case"
   const formatKey = (key) =>
     key.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 
@@ -96,6 +102,7 @@ const FileTreeExplorer = () => {
 
     // Check if currently expanded
     const isExpanded = !!expandedPaths[node.path];
+    const isLoading = loadingPaths[node.path];
 
     // Decide how to handle a click
     const handleClick = (e) => {
@@ -107,84 +114,56 @@ const FileTreeExplorer = () => {
       }
     };
 
-    // Render children for a directory if expanded
-    let children = null;
-    if (isDirectory && isExpanded) {
-      const dirChildren = childrenByPath[node.path] || [];
-      children = (
-        <div style={{ marginLeft: 20, marginTop: "5px" }}>
-          {dirChildren.map((child) => (
-            <TreeNode key={child.path} node={child} level={level + 1} />
-          ))}
-        </div>
-      );
-    }
-
-    // Render file analysis if expanded
-    let fileAnalysis = null;
-    if (isFile && isExpanded && analysisByPath[node.path]) {
-      fileAnalysis = (
-        <div
-          style={{
-            marginLeft: 20,
-            marginTop: "5px",
-            backgroundColor: "#f9f9f9",
-            padding: "5px",
-            border: "1px solid #ddd",
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {renderAnalysis(analysisByPath[node.path])}
-        </div>
-      );
-    }
-
     return (
-      <div style={{ marginLeft: level * 20, marginBottom: "5px" }}>
-        {/* Node header */}
-        <div
-          style={{
-            padding: "8px",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            backgroundColor: isDirectory ? "#e0f7fa" : "#fff",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-          }}
+      <Stack spacing="xs" ml={level * 20}>
+        <Card 
+          shadow="sm" 
+          p="sm"
           onClick={handleClick}
+          style={{ cursor: 'pointer' }}
+          withBorder
         >
-          {/* Directory toggle arrows */}
-          {isDirectory && (
-            <span style={{ marginRight: "8px", fontSize: "18px" }}>
-              {isExpanded ? "▼" : "►"}
-            </span>
-          )}
-          <span>{node.name}</span>
-        </div>
+          <Group>
+            {isDirectory && (
+              <ActionIcon variant="subtle" sx={{ cursor: 'pointer' }}>
+                {isExpanded ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
+              </ActionIcon>
+            )}
+            <Text>{node.name}</Text>
+            {isLoading && <Loader size="sm" />}
+          </Group>
+        </Card>
 
         {/* If file is expanded, show analysis */}
-        {fileAnalysis}
+        {isFile && isExpanded && analysisByPath[node.path] && (
+          <Card shadow="sm" p="sm" withBorder ml={20}>
+            {renderAnalysis(analysisByPath[node.path])}
+          </Card>
+        )}
 
         {/* If directory is expanded, show child nodes */}
-        {children}
-      </div>
+        {isDirectory && isExpanded && (
+          <Stack spacing="xs">
+            {(childrenByPath[node.path] || []).map((child) => (
+              <TreeNode key={child.path} node={child} level={level + 1} />
+            ))}
+          </Stack>
+        )}
+      </Stack>
     );
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "20px" }}>
-        Repository File Tree
-      </h2>
+    <Stack p="md">
+      <Title order={2}>Repository File Tree</Title>
       {rootNodes.length > 0 ? (
         rootNodes.map((node) => (
           <TreeNode key={node.path} node={node} level={0} />
         ))
       ) : (
-        <div>Loading file tree...</div>
+        <Text>Loading file tree...</Text>
       )}
-    </div>
+    </Stack>
   );
 };
 
