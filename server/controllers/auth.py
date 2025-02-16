@@ -55,8 +55,13 @@ def authorize():
     if u is None:
         u = User(
             github_username=user_info["login"],
+            github_access_token=token["access_token"]
         )
         db.session.add(u)
+        db.session.commit()
+    else:
+        # Update the access token for existing users
+        u.github_access_token = token["access_token"]
         db.session.commit()
         
     # Store user info and access token in session
@@ -71,7 +76,7 @@ def authorize():
                              for repo in repos]
     
     # Redirect to frontend home page where user can select a repository
-    return redirect(f"{FRONTEND_URL}/")
+    return redirect(f"{BACKEND_URL}/dashboard")
 
 
 @auth.get("/whoami")

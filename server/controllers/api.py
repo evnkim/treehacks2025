@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, cast
 
 from apiflask import APIBlueprint
-from flask import current_app, jsonify, request
+from flask import current_app, jsonify, request, session
 import requests
 from sqlalchemy import select
 
@@ -17,24 +17,45 @@ from server.controllers.ai_insights import (
     explain_code,
     summarize_pr,
 )
+from server.models.User import User
 
 api = APIBlueprint("api", __name__, url_prefix="/api", tag="api")
 
 
 ### API Endpoints ###
 
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+def get_user_token():
+    """Helper function to get the GitHub access token for the current user."""
+    if "user" not in session:
+        return None
+        
+    user = db.session.execute(
+        select(User).where(User.github_username == session["user"]["login"])
+    ).scalar_one_or_none()
+    
+    if not user or not user.github_access_token:
+        return None
+        
+    return user.github_access_token
+
+@api.before_request
+def check_auth():
+    """Verify user is authenticated before accessing API endpoints."""
+    if request.endpoint and not request.endpoint.endswith('.analyze_file'):  # Skip auth for file analysis
+        if "user" not in session:
+            return jsonify({"error": "Not authenticated"}), 401
+        token = get_user_token()
+        if not token:
+            return jsonify({"error": "GitHub token not found"}), 401
 
 @api.route("/github/repositories", methods=["GET"])
 def get_repositories():
     """Get list of repositories the authenticated user has access to."""
-    if not GITHUB_TOKEN:
-        current_app.logger.error("GITHUB_TOKEN is not set!")
-        return jsonify({"error": "GitHub token not configured"}), 500
-
+    token = get_user_token()
+    
     headers = {
         "Accept": "application/vnd.github.v3+json",
-        "Authorization": f"token {GITHUB_TOKEN}"
+        "Authorization": f"token {token}"
     }
 
     # Get authenticated user's repositories (both private and public)
@@ -76,14 +97,10 @@ def get_contributors(repo_owner, repo_name):
         current_app.logger.error("Missing owner or repo in request")
         return jsonify({"error": "Missing owner or repo"}), 400
 
-    if not GITHUB_TOKEN:
-        current_app.logger.error("GITHUB_TOKEN is not set!")
-    else:
-        current_app.logger.info("GITHUB_TOKEN loaded successfully.")
-
+    token = get_user_token()
     headers = {
         "Accept": "application/vnd.github.v3+json",
-        "Authorization": f"token {GITHUB_TOKEN}"
+        "Authorization": f"token {token}"
     }
 
     contributors_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/contributors"
@@ -267,14 +284,12 @@ def analyze_folder():
 
 @api.route("/github/list-files/<repo_owner>/<repo_name>", methods=["GET"])
 def github_list_files(repo_owner, repo_name):
-    """
-    Lists files in a GitHub repository folder.
-    Expects an optional query parameter "path" (default is root).
-    """
+    """Lists files in a GitHub repository folder."""
     path = request.args.get("path", "")
+    token = get_user_token()
     headers = {
         "Accept": "application/vnd.github.v3+json",
-        "Authorization": f"token {GITHUB_TOKEN}"
+        "Authorization": f"token {token}"
     }
     url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/contents/{path}"
     current_app.logger.info(f"Fetching GitHub repository contents from {url}")
@@ -286,15 +301,12 @@ def github_list_files(repo_owner, repo_name):
 
 @api.route("/github/get-file/<repo_owner>/<repo_name>", methods=["GET"])
 def github_get_file(repo_owner, repo_name):
-    """
-    Fetches the raw content of a file in a GitHub repository.
-    Expects a query parameter "path" with the file path in the repo.
-    """
+    """Fetches the raw content of a file in a GitHub repository."""
     path = request.args.get("path", "")
+    token = get_user_token()
     headers = {
-        # Use the raw content media type
         "Accept": "application/vnd.github.v3.raw",
-        "Authorization": f"token {GITHUB_TOKEN}"
+        "Authorization": f"token {token}"
     }
     url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/contents/{path}"
     current_app.logger.info(f"Fetching file content from GitHub: {url}")
@@ -302,5 +314,4 @@ def github_get_file(repo_owner, repo_name):
     if response.status_code != 200:
         current_app.logger.error(f"GitHub API error: {response.json()}")
         return jsonify({"error": "Failed to fetch file content", "details": response.json()}), response.status_code
-    # Return raw text
     return response.text

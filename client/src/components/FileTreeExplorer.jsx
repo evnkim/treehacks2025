@@ -34,8 +34,21 @@ const FileTreeExplorer = () => {
   useEffect(() => {
     if (owner && repo) {
       fetch(`/api/github/list-files/${owner}/${repo}?path=`)
-        .then((response) => response.json())
-        .then((data) => setRootNodes(data))
+        .then(async (response) => {
+          if (!response.ok) {
+            const error = await response.json();
+            if (response.status === 401) {
+              // Redirect to login if not authenticated
+              window.location.href = "/api/auth/login";
+              return;
+            }
+            throw new Error(error.error || 'Failed to fetch repository contents');
+          }
+          return response.json();
+        })
+        .then((data) => {
+          if (data) setRootNodes(data);
+        })
         .catch((error) => console.error("Error fetching root file tree:", error));
     }
   }, [owner, repo]);
@@ -49,6 +62,14 @@ const FileTreeExplorer = () => {
         const response = await fetch(
           `/api/github/list-files/${owner}/${repo}?path=${encodeURIComponent(node.path)}`
         );
+        if (!response.ok) {
+          const error = await response.json();
+          if (response.status === 401) {
+            window.location.href = "/api/auth/login";
+            return;
+          }
+          throw new Error(error.error || 'Failed to fetch folder contents');
+        }
         const data = await response.json();
         setChildrenByPath((prev) => ({ ...prev, [node.path]: data }));
       } catch (error) {
@@ -72,12 +93,23 @@ const FileTreeExplorer = () => {
         const fileRes = await fetch(
           `/api/github/get-file/${owner}/${repo}?path=${encodeURIComponent(node.path)}`
         );
+        if (!fileRes.ok) {
+          const error = await fileRes.json();
+          if (fileRes.status === 401) {
+            window.location.href = "/api/auth/login";
+            return;
+          }
+          throw new Error(error.error || 'Failed to fetch file content');
+        }
         const fileContent = await fileRes.text();
         const analysisRes = await fetch("/api/analyze/file", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ file_content: fileContent }),
         });
+        if (!analysisRes.ok) {
+          throw new Error('Failed to analyze file');
+        }
         const analysisData = await analysisRes.json();
         setAnalysisByPath((prev) => ({ ...prev, [node.path]: analysisData }));
       } catch (error) {
