@@ -1,7 +1,15 @@
 // client/src/components/FileTreeExplorer.jsx
 
 import React, { useState, useEffect } from "react";
-import { Card, Group, Text, ActionIcon, Stack, Title, Loader } from "@mantine/core";
+import {
+  Card,
+  Group,
+  Text,
+  ActionIcon,
+  Stack,
+  Title,
+  Loader,
+} from "@mantine/core";
 import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
 
 const FileTreeExplorer = () => {
@@ -32,7 +40,9 @@ const FileTreeExplorer = () => {
     if (!isCurrentlyExpanded && !childrenByPath[node.path]) {
       try {
         const response = await fetch(
-          `/api/github/list-files/techx/plume?path=${encodeURIComponent(node.path)}`
+          `/api/github/list-files/techx/plume?path=${encodeURIComponent(
+            node.path
+          )}`
         );
         const data = await response.json();
         setChildrenByPath((prev) => ({ ...prev, [node.path]: data }));
@@ -52,10 +62,12 @@ const FileTreeExplorer = () => {
   const toggleFile = async (node) => {
     const isCurrentlyExpanded = expandedPaths[node.path];
     if (!analysisByPath[node.path] && !isCurrentlyExpanded) {
-      setLoadingPaths(prev => ({ ...prev, [node.path]: true }));
+      setLoadingPaths((prev) => ({ ...prev, [node.path]: true }));
       try {
         const fileRes = await fetch(
-          `/api/github/get-file/techx/plume?path=${encodeURIComponent(node.path)}`
+          `/api/github/get-file/techx/plume?path=${encodeURIComponent(
+            node.path
+          )}`
         );
         const fileContent = await fileRes.text();
         const analysisRes = await fetch("/api/analyze/file", {
@@ -68,7 +80,7 @@ const FileTreeExplorer = () => {
       } catch (error) {
         console.error("Error fetching file analysis:", error);
       } finally {
-        setLoadingPaths(prev => ({ ...prev, [node.path]: false }));
+        setLoadingPaths((prev) => ({ ...prev, [node.path]: false }));
       }
     }
 
@@ -83,9 +95,24 @@ const FileTreeExplorer = () => {
   const renderAnalysis = (analysis) => (
     <Stack spacing="xs">
       {Object.entries(analysis).map(([key, value]) => (
-        <Text key={key}>
-          <Text span fw={700}>{formatKey(key)}:</Text> {String(value)}
-        </Text>
+        <div key={key}>
+          <Text fw={700}>{formatKey(key)}:</Text>
+          {typeof value === 'object' && value !== null ? (
+            <Stack spacing="xs" ml={20}>
+              {Object.entries(value).map(([subKey, subValue]) => (
+                <Text key={subKey}>
+                  <Text span fw={500}>{formatKey(subKey)}:</Text> {
+                    typeof subValue === 'object' && subValue !== null
+                      ? JSON.stringify(subValue, null, 2)
+                      : String(subValue)
+                  }
+                </Text>
+              ))}
+            </Stack>
+          ) : (
+            <Text ml={20}>{String(value)}</Text>
+          )}
+        </div>
       ))}
     </Stack>
   );
@@ -116,17 +143,21 @@ const FileTreeExplorer = () => {
 
     return (
       <Stack spacing="xs" ml={level * 20}>
-        <Card 
-          shadow="sm" 
+        <Card
+          shadow="sm"
           p="sm"
           onClick={handleClick}
-          style={{ cursor: 'pointer' }}
+          style={{ cursor: "pointer" }}
           withBorder
         >
           <Group>
             {isDirectory && (
-              <ActionIcon variant="subtle" sx={{ cursor: 'pointer' }}>
-                {isExpanded ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
+              <ActionIcon variant="subtle" sx={{ cursor: "pointer" }}>
+                {isExpanded ? (
+                  <IconChevronDown size={16} />
+                ) : (
+                  <IconChevronRight size={16} />
+                )}
               </ActionIcon>
             )}
             <Text>{node.name}</Text>
